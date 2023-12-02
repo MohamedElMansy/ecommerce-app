@@ -17,9 +17,17 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register',  'App\Http\Controllers\AuthController@register');
 Route::post('login', 'App\Http\Controllers\AuthController@login');
 
-Route::middleware('jwt.verify')->group(function() {
+Route::middleware('jwt.verify')->group(function () {
     Route::post('/logout', 'App\Http\Controllers\AuthController@logout');
-    Route::get('/dashboard', function() {
-        return response()->json(['message' => 'Welcome to dashboard'], 200);
+    // for only Merchant
+   Route::middleware('App\Http\Middleware\CheckMerchantMiddleware')->group(function () {
+        //stores
+        Route::post('/stores', 'App\Http\Controllers\StoreController@create');
+        //products
+        Route::post('/products', 'App\Http\Controllers\ProductController@store');
     });
 });
+
+//Guest Routes
+Route::get('/products', 'App\Http\Controllers\ProductController@index');
+Route::get('/products/{id}', 'App\Http\Controllers\ProductController@show');
