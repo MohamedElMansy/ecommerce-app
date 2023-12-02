@@ -22,7 +22,7 @@ Route::middleware('jwt.verify')->group(function () {
     // for only Merchant
    Route::middleware('App\Http\Middleware\CheckMerchantMiddleware')->group(function () {
         //stores
-        Route::post('stores', 'App\Http\Controllers\StoreController@create');
+        Route::post('stores', 'App\Http\Controllers\StoreController@store');
         //products
         Route::post('products', 'App\Http\Controllers\ProductController@store');
     });

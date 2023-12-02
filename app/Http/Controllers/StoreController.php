@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class StoreController extends Controller
 {
-    public function create(StoreRequest $request)
+    public function store(StoreRequest $request)
     {
         $user = auth()->user();
         $store = new Store();
