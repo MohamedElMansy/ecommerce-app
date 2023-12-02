@@ -178,10 +178,10 @@ class CartController extends Controller
 
             //vat calulations
             if (!$store->is_vat_included) {
-                if (!empty($store->vat_price)) {
+                if (!empty($store->vat_price) && $store->vat_price != '0.00') {
                     $vat_amount_all_products = $store->vat_price * $item->quantity;
                     $total_vat = $total_vat + $vat_amount_all_products;
-                } elseif (!empty($store->vat_percentage)) {
+                } else {
                     $total_vat = $total_vat + (($store->vat_percentage * $item->product->price * $item->quantity) / 100);
                 }
             }
