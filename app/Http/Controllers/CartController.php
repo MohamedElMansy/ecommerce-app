@@ -46,10 +46,15 @@ class CartController extends Controller
         $cartKey = $request->input('cart_key');
         if ($cart->key == $cartKey) {
             $cart_items = empty($cart->cartItems) ? array() : $cart->cartItems;
+            $cart_calc = $this->get_cart_calculations($cart_items);
             return response()->json([
                 'success' => true,
                 'cart_id' => $cart->id,
                 'cart_items' => new CartItemCollection($cart_items),
+                "total_products_prices" => $cart_calc["total_products_prices"],
+                "total_vat" => $cart_calc["total_vat"],
+                "total_shipping_cost" => $cart_calc["total_shipping_cost"],
+                "total_to_pay" => $cart_calc["total_to_pay"]
             ], 200);
         } else {
 
@@ -150,5 +155,49 @@ class CartController extends Controller
                 'message' => 'Cart keys mismatched.',
             ], 400);
         }
+    }
+
+    /**
+     * Get Cart Calculations
+     *
+     * @param CartItem $cart_items
+     * @return object
+     */
+    public function get_cart_calculations($cart_items)
+    {
+        $total_products_prices = 0;
+        $total_vat = 0;
+        $total_shipping_cost = 0;
+        $store_shipped = array();
+
+        foreach ($cart_items as $item) {
+            //to make code readable
+            $store = $item->product->store;
+            // get the total prices of each product (price * quantity) then + the total prices of all products
+            $total_products_prices = $total_products_prices + ($item->product->price * $item->quantity);
+
+            //vat calulations
+            if (!$store->is_vat_included) {
+                if (!empty($store->vat_price)) {
+                    $vat_amount_all_products = $store->vat_price * $item->quantity;
+                    $total_vat = $total_vat + $vat_amount_all_products;
+                } elseif (!empty($store->vat_percentage)) {
+                    $total_vat = $total_vat + (($store->vat_percentage * $item->product->price * $item->quantity) / 100);
+                }
+            }
+
+            //shipping cost calculation (add the shipping cost of the stores which their products exist in cart)
+            if (!in_array($store->id, $store_shipped)) {
+                $store_shipped[] = $store->id;
+                $total_shipping_cost = $total_shipping_cost + $store->shipping_cost;
+            }
+        }
+        $total_to_pay = $total_products_prices + $total_vat + $total_shipping_cost;
+        return  [
+            "total_products_prices" => $total_products_prices,
+            "total_vat" => $total_vat,
+            "total_shipping_cost" => $total_shipping_cost,
+            "total_to_pay" => $total_to_pay
+        ];
     }
 }
